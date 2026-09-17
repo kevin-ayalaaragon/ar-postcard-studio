@@ -1,0 +1,33 @@
+// Prisma schema for AR Postcard Studio.
+// Dev datasource is SQLite (zero-infra); prod swaps to Postgres via DATABASE_URL.
+// See docs/adr/0002-database-orm.md.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+enum PostcardStatus {
+  SUBMITTED   // photo + message received, waiting on AR assets
+  READY       // target.mind + video attached, viewer + print files are live
+}
+
+model Postcard {
+  id             String         @id @default(cuid())
+  slug           String         @unique
+  senderName     String
+  recipientName  String
+  message        String
+  photoPath      String
+  photoWidthPx   Int
+  photoHeightPx  Int
+  targetMindPath String?
+  videoPath      String?
+  status         PostcardStatus @default(SUBMITTED)
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+}

@@ -1,0 +1,76 @@
+# Resume/portfolio skill tracker for this repo.
+#
+# No canonical, authoritative format exists for "track resume
+# differentiators in a repo file" (checked during architecture research -
+# see docs/adr/0000-record-architecture-decisions.md's sourcing rule). This
+# file is loosely modeled on the *ring* concept from ThoughtWorks'
+# Technology Radar (https://www.thoughtworks.com/radar) - structural
+# inspiration only, not a literal citation for this exact schema.
+#
+# Update this alongside architecture changes, not after the fact from memory.
+
+project: ar-postcard-studio
+last_updated: "2026-09-17"
+
+differentiators:
+  - skill: Full-stack TypeScript (Next.js App Router monolith)
+    evidence:
+      - src/app/api/postcards/route.ts
+      - src/app/postcard/[slug]/page.tsx
+    resume_bullet: >-
+      Built a full-stack Next.js (App Router) application - typed API route
+      handlers, server components, and a client-side upload flow - end to
+      end from a public submission form to an admin fulfillment dashboard.
+
+  - skill: Relational data modeling with an ORM (Prisma)
+    evidence:
+      - prisma/schema.prisma
+      - src/lib/db.ts
+    resume_bullet: >-
+      Modeled and migrated a relational schema (SQLite dev / Postgres-ready
+      prod) with Prisma, including a deliberate version pin to avoid an
+      unreleased major with a breaking config format.
+
+  - skill: WebAR integration generalized to a multi-tenant data model
+    evidence:
+      - src/app/postcard/[slug]/ArViewer.tsx
+    resume_bullet: >-
+      Took a single-use MindAR.js/A-Frame WebAR viewer (image tracking +
+      video overlay) and generalized it into a per-record dynamic viewer
+      driven by database state, while working around React/custom-element
+      DOM-ownership conflicts.
+
+  - skill: Server-side image processing and print-file generation
+    evidence:
+      - src/lib/postcard-print.ts
+      - src/lib/qr.ts
+    resume_bullet: >-
+      Generated print-ready output (SVG-to-raster text layout via sharp,
+      composited with a standards-compliant QR code) entirely server-side.
+
+  - skill: Storage abstraction / provider-agnostic design
+    evidence:
+      - src/lib/storage.ts
+    resume_bullet: >-
+      Designed a storage interface that runs on the local filesystem in dev
+      and swaps to S3-compatible object storage in prod with no caller
+      changes, following the Twelve-Factor "backing services" pattern.
+
+  - skill: Architecture decision documentation (ADR/MADR discipline)
+    evidence:
+      - docs/adr/
+    resume_bullet: >-
+      Maintained a cited architecture decision ledger (MADR format) across
+      an AI-assisted build, requiring a traceable source for every
+      technology choice, including synthesized ones.
+
+  - skill: Security-conscious defaults under time pressure
+    evidence:
+      - src/lib/admin-auth.ts
+      - src/lib/qr.ts
+    resume_bullet: >-
+      Applied timing-safe secret comparison for an internal admin
+      endpoint and print-safe QR error-correction/quiet-zone settings
+      sourced from the format's own standard, while explicitly documenting
+      the admin auth as an MVP placeholder rather than a finished security
+      posture.
