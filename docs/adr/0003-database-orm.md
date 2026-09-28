@@ -1,7 +1,9 @@
 # 0003 - Prisma ORM, SQLite for dev / Postgres for prod, pinned to the 6.x line
 
 ## Status
-Accepted
+Accepted. The dev/prod provider split in this Decision Outcome was later
+found unworkable and reversed - see
+[0009](0009-single-postgres-datasource.md).
 
 ## Context and Problem Statement
 Postcards need a real record (sender/recipient/message/status/asset

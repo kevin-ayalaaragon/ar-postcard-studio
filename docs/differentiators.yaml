@@ -10,7 +10,7 @@
 # Update this alongside architecture changes, not after the fact from memory.
 
 project: ar-postcard-studio
-last_updated: "2026-09-17"
+last_updated: "2026-09-28"
 
 differentiators:
   - skill: Full-stack TypeScript (Next.js App Router monolith)
@@ -74,3 +74,30 @@ differentiators:
       sourced from the format's own standard, while explicitly documenting
       the admin auth as an MVP placeholder rather than a finished security
       posture.
+
+  - skill: Caught a deploy-blocking architecture gap before it shipped
+    evidence:
+      - docs/adr/0009-single-postgres-datasource.md
+      - prisma/schema.prisma
+    resume_bullet: >-
+      Identified that a documented ORM architecture decision (SQLite dev /
+      Postgres prod, switched via an environment variable) was technically
+      unworkable - the datasource provider is a fixed value, not
+      environment-resolved, and SQLite-dialect migrations don't run
+      against Postgres - before it caused a failed production deploy;
+      revised the decision (single Postgres datasource, dev/prod parity)
+      and documented the reversal with cited sources rather than silently
+      patching around it.
+
+  - skill: Cloud deployment architecture (Vercel + managed Postgres + S3-compatible storage)
+    evidence:
+      - docs/adr/0010-hosting-vercel-neon-r2.md
+      - src/lib/storage.ts
+    resume_bullet: >-
+      Selected and implemented a $0/month production hosting stack
+      (Vercel, Neon Postgres, Cloudflare R2) evaluated against three
+      alternatives on cost, job-market legibility, and this app's actual
+      runtime constraints (a native-binary image-processing dependency
+      needing a Node.js, not Edge, function runtime), then implemented the
+      S3-compatible storage driver behind the project's existing
+      provider-agnostic storage interface with no caller changes.

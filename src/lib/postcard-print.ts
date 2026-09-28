@@ -51,7 +51,7 @@ export interface PostcardBackInput {
  * box, and a scannable QR code pointing at the AR viewer) as a print-ready
  * PNG. Built as an SVG overlay rasterized by sharp/resvg rather than a
  * canvas library, keeping text crisp at print resolution - see
- * docs/adr/0004-print-file-generation.md.
+ * docs/adr/0005-print-file-generation.md.
  */
 export async function renderPostcardBack(input: PostcardBackInput): Promise<Buffer> {
   const qrPng = await generateQrPng(input.viewerUrl, QR_SIZE);

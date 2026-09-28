@@ -9,8 +9,27 @@ on:
 jobs:
   lint-and-build:
     runs-on: ubuntu-latest
+    # A real Postgres, not SQLite - the app only supports Postgres now
+    # (see docs/adr/0009-single-postgres-datasource.md), and this also
+    # genuinely validates the checked-in migration SQL against the same
+    # engine production runs, not just a syntax read-through.
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: ci
+          POSTGRES_PASSWORD: ci
+          POSTGRES_DB: ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
     env:
-      DATABASE_URL: "file:./ci.db"
+      DATABASE_URL: "postgresql://ci:ci@localhost:5432/ci"
+      DIRECT_URL: "postgresql://ci:ci@localhost:5432/ci"
       ADMIN_SECRET: "ci-placeholder-secret"
       PUBLIC_BASE_URL: "http://localhost:3000"
     steps:

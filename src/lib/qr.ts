@@ -8,7 +8,7 @@ import QRCode from "qrcode";
  * - margin 4: the QR spec's minimum quiet zone, in modules. Cropping this
  *   away measurably hurts real-world scan reliability.
  * - Pure black-on-white for maximum scanner contrast.
- * See docs/adr/0003-qr-generation.md for citations.
+ * See docs/adr/0004-qr-generation.md for citations.
  */
 export async function generateQrPng(url: string, sizePx = 600): Promise<Buffer> {
   return QRCode.toBuffer(url, {

@@ -1,6 +1,9 @@
+-- CreateEnum
+CREATE TYPE "PostcardStatus" AS ENUM ('SUBMITTED', 'READY');
+
 -- CreateTable
 CREATE TABLE "Postcard" (
-    "id" TEXT NOT NULL PRIMARY KEY,
+    "id" TEXT NOT NULL,
     "slug" TEXT NOT NULL,
     "senderName" TEXT NOT NULL,
     "recipientName" TEXT NOT NULL,
@@ -10,9 +13,11 @@ CREATE TABLE "Postcard" (
     "photoHeightPx" INTEGER NOT NULL,
     "targetMindPath" TEXT,
     "videoPath" TEXT,
-    "status" TEXT NOT NULL DEFAULT 'SUBMITTED',
-    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" DATETIME NOT NULL
+    "status" "PostcardStatus" NOT NULL DEFAULT 'SUBMITTED',
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "Postcard_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateIndex

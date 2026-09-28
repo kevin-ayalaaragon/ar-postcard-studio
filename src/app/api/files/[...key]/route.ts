@@ -4,7 +4,7 @@ import { storage, contentTypeFor } from "@/lib/storage";
 // Streams a stored file back out. Indirecting through the storage
 // abstraction (rather than a static /public mount) is what lets the
 // storage driver swap to S3-compatible object storage in prod without
-// this route or any client URL changing - see docs/adr/0005-file-storage.md.
+// this route or any client URL changing - see docs/adr/0006-file-storage.md.
 export async function GET(
   _request: Request,
   { params }: { params: Promise<{ key: string[] }> }

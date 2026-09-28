@@ -6,7 +6,7 @@ import "./ar-viewer.css";
 // Ported from the predecessor project's index.html
 // (github.com/kevin-ayalaaragon/ar-birthday-postcard), generalized to take
 // per-postcard asset URLs and target dimensions as props instead of
-// hardcoded globals. See docs/adr/0007-ar-viewer-reuse.md for why this
+// hardcoded globals. See docs/adr/0008-ar-viewer-reuse.md for why this
 // stays vanilla-DOM/imperative rather than React-managed markup:
 // A-Frame's custom elements mutate their own subtree (injecting a canvas,
 // cursor, etc.), which fights React's reconciliation if React also owns

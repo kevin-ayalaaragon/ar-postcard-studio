@@ -1,14 +1,21 @@
 // Prisma schema for AR Postcard Studio.
-// Dev datasource is SQLite (zero-infra); prod swaps to Postgres via DATABASE_URL.
-// See docs/adr/0002-database-orm.md.
+// Postgres everywhere (Neon), dev and prod both - see docs/adr/0009-single-postgres-datasource.md.
+// ORM/version-pin rationale: docs/adr/0003-database-orm.md.
 
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "sqlite"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  // Pooled connection (via PgBouncer) for app runtime queries - required
+  // so serverless function instances don't exhaust Postgres's direct
+  // connection limit. directUrl is the unpooled connection Prisma Migrate
+  // needs (pooled/transaction-mode connections don't support the
+  // prepared statements migrations rely on). Neon provides both for the
+  // same database. See docs/adr/0010-hosting-vercel-neon-r2.md.
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 enum PostcardStatus {

@@ -3,7 +3,7 @@ import { timingSafeEqual } from "node:crypto";
 /**
  * MVP stand-in for real auth: a single shared secret sent as a header,
  * checked with a timing-safe comparison. Documented as a deliberate
- * placeholder in docs/adr/0006-admin-auth.md - swap for real
+ * placeholder in docs/adr/0007-admin-auth.md - swap for real
  * session/OAuth-based auth before this app has more than one admin.
  */
 export function isAuthorizedAdmin(request: Request): boolean {

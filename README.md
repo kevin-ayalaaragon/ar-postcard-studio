@@ -59,19 +59,22 @@ generalizes that idea into a real submission pipeline that anyone can use.
 | Layer | Choice | Why |
 |---|---|---|
 | Framework | Next.js 16 (App Router, TypeScript) | One deployable for pages + API routes - see [ADR 0002](docs/adr/0002-nextjs-monolith.md) |
-| Database | Prisma + SQLite (dev) / Postgres (prod) | Type-safe queries, pinned to a stable major - [ADR 0003](docs/adr/0003-database-orm.md) |
+| Database | Prisma + Postgres (Neon), same provider dev and prod | Type-safe queries, pinned to a stable major - [ADR 0003](docs/adr/0003-database-orm.md); dev/prod parity - [ADR 0009](docs/adr/0009-single-postgres-datasource.md) |
 | AR viewer | MindAR.js + A-Frame | Free/open image tracking, carried over from the predecessor project - [ADR 0008](docs/adr/0008-ar-viewer-reuse.md) |
 | Print generation | `sharp` + SVG rasterization | Fast, print-quality text layout - [ADR 0005](docs/adr/0005-print-file-generation.md) |
 | QR codes | `qrcode` (error correction `H`, 4-module quiet zone) | Print/scan reliability - [ADR 0004](docs/adr/0004-qr-generation.md) |
-| File storage | Local disk (dev), swappable to S3-compatible (prod) | [ADR 0006](docs/adr/0006-file-storage.md) |
+| File storage | Local disk (dev), Cloudflare R2 (prod) | Provider-agnostic `StorageDriver` interface - [ADR 0006](docs/adr/0006-file-storage.md) |
+| Hosting | Vercel + Neon + Cloudflare R2 | $0/month, conventional Next.js stack - [ADR 0010](docs/adr/0010-hosting-vercel-neon-r2.md) |
 
 ## Getting started
 
-**Prerequisites:** Node.js 20.9+ (developed against 24), npm.
+**Prerequisites:** Node.js 20.9+ (developed against 24), npm, and a free
+[Neon](https://neon.tech) Postgres branch for local dev (no local Postgres
+server or Docker needed - see [ADR 0009](docs/adr/0009-single-postgres-datasource.md)).
 
 ```bash
 npm install
-cp .env.example .env   # then set a real ADMIN_SECRET (see below)
+cp .env.example .env   # set DATABASE_URL/DIRECT_URL to your Neon dev branch, and a real ADMIN_SECRET
 npx prisma migrate dev
 npm run dev
 ```
@@ -86,10 +89,12 @@ only).
 
 | Variable | Purpose | Dev default |
 |---|---|---|
-| `DATABASE_URL` | Prisma connection string | `file:./dev.db` (SQLite) |
+| `DATABASE_URL` | Prisma connection string, pooled (PgBouncer) | a Neon dev branch |
+| `DIRECT_URL` | Prisma Migrate's connection string, unpooled | a Neon dev branch |
 | `ADMIN_SECRET` | Shared secret for the admin asset-upload endpoint - see [ADR 0007](docs/adr/0007-admin-auth.md) | generate your own |
 | `PUBLIC_BASE_URL` | Base URL baked into each postcard's QR code | `http://localhost:3000` |
-| `LOCAL_STORAGE_DIR` | Where the local storage driver writes files | `./storage` |
+| `LOCAL_STORAGE_DIR` | Where the local storage driver writes files (used only when `R2_ACCOUNT_ID` is unset) | `./storage` |
+| `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET_NAME` | Cloudflare R2 credentials - storage switches to R2 the moment `R2_ACCOUNT_ID` is set | unset locally |
 
 Full reference with comments: [`.env.example`](.env.example).
 
@@ -103,25 +108,42 @@ this build demonstrates are tracked in
 
 ## Deployment
 
-Not yet deployed. Needs, at minimum: a hosted Postgres database
-(`DATABASE_URL`), S3-compatible object storage in place of the local
-storage driver, and a real `ADMIN_SECRET`. Any Node-capable host works -
-this is a standard Next.js app with no exotic runtime requirements.
+Stack: **Vercel** (app) + **Neon** (Postgres) + **Cloudflare R2** (object
+storage) - all free-tier, $0/month at this project's scale. Rationale and
+alternatives considered: [ADR 0010](docs/adr/0010-hosting-vercel-neon-r2.md).
+
+1. **Neon** - create a project at [neon.tech](https://neon.tech), grab the
+   pooled and direct connection strings for `DATABASE_URL`/`DIRECT_URL`.
+   Create a second branch for local dev so prod stays untouched by local
+   testing.
+2. **Cloudflare R2** - create a bucket, then an R2 API token scoped to it,
+   for `R2_ACCOUNT_ID`/`R2_ACCESS_KEY_ID`/`R2_SECRET_ACCESS_KEY`/
+   `R2_BUCKET_NAME`.
+3. **Vercel** - import this repo, set all of the above plus a real
+   `ADMIN_SECRET` and `PUBLIC_BASE_URL` (the production domain Vercel
+   assigns) as environment variables, then deploy. `vercel-build` (see
+   `package.json`) runs `prisma migrate deploy` automatically on every
+   deploy, so the database schema stays in sync with the code - no manual
+   migration step.
+
+No exotic runtime requirements otherwise - `sharp` needs a Node.js
+function (not Edge) runtime, which is Vercel's default for route handlers.
 
 ## Roadmap
 
 - [ ] Auto-generate the `.mind` target and animation from the uploaded
       photo instead of the manual admin step.
 - [ ] Real session/OAuth-based admin auth ([ADR 0007](docs/adr/0007-admin-auth.md)).
-- [ ] S3-compatible object storage in production ([ADR 0006](docs/adr/0006-file-storage.md)).
-- [ ] Deploy (Postgres + object storage wired up).
+- [ ] First live production deploy (Neon/R2/Vercel accounts provisioned,
+      env vars set - the app itself is deploy-ready as of
+      [ADR 0010](docs/adr/0010-hosting-vercel-neon-r2.md)).
 
 ## Related project
 
-[ar-birthday-postcard](https://github.com/kevin-ayalaaragon/ar-birthday-postcard) -
-the original single-use WebAR birthday card this project generalizes.
-That repo is a printed, already-delivered gift and is intentionally left
-untouched - see [ADR 0001](docs/adr/0001-new-repo-not-rename.md).
+ar-birthday-postcard - the original single-use WebAR birthday card this
+project generalizes. That repo is a printed, already-delivered personal
+gift, kept private rather than public, and intentionally left untouched -
+see [ADR 0001](docs/adr/0001-new-repo-not-rename.md).
 
 ## License
 
