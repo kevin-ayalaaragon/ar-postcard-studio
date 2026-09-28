@@ -9,9 +9,9 @@ import {
 
 // Storage abstraction: every route talks to `storage`, never to `fs`
 // directly. Dev uses the local filesystem below; production swaps this
-// module for an S3-compatible client (Cloudflare R2 / AWS S3) without
+// module for an S3-compatible client (Backblaze B2 / AWS S3) without
 // touching any caller. See docs/adr/0006-file-storage.md and
-// docs/adr/0010-hosting-vercel-neon-r2.md.
+// docs/adr/0010-hosting-vercel-neon-b2.md.
 export interface StorageDriver {
   putFile(key: string, data: Buffer): Promise<void>;
   getFile(key: string): Promise<Buffer | null>;
@@ -59,22 +59,25 @@ class LocalStorageDriver implements StorageDriver {
   }
 }
 
-class R2StorageDriver implements StorageDriver {
+class B2StorageDriver implements StorageDriver {
   private readonly client: S3Client;
 
   constructor(
-    private readonly accountId: string,
     private readonly bucket: string,
-    accessKeyId: string,
-    secretAccessKey: string
+    region: string,
+    keyId: string,
+    applicationKey: string
   ) {
-    // R2's S3-compatible endpoint is account-scoped, not region-scoped -
-    // Cloudflare has no concept of AWS regions, so this always passes
-    // "auto". See docs/adr/0010-hosting-vercel-neon-r2.md.
+    // Backblaze B2's S3-compatible endpoint is region-scoped
+    // (s3.<region>.backblazeb2.com) - a B2 account is pinned to one
+    // region, shown on the bucket's own page. forcePathStyle avoids
+    // relying on virtual-hosted-style DNS resolving correctly for a
+    // non-AWS endpoint. See docs/adr/0010-hosting-vercel-neon-b2.md.
     this.client = new S3Client({
-      region: "auto",
-      endpoint: `https://${accountId}.r2.cloudflarestorage.com`,
-      credentials: { accessKeyId, secretAccessKey },
+      region,
+      endpoint: `https://s3.${region}.backblazeb2.com`,
+      forcePathStyle: true,
+      credentials: { accessKeyId: keyId, secretAccessKey: applicationKey },
     });
   }
 
@@ -103,27 +106,27 @@ class R2StorageDriver implements StorageDriver {
   }
 }
 
-// R2 wins when configured (production); local filesystem is the fallback
-// for zero-account local dev. Toggled on R2_ACCOUNT_ID's presence alone -
-// if that's set, the other three R2_* vars are required and its absence
-// is treated as local dev, never as "storage half-configured, fall
-// through silently."
+// B2 wins when configured (production); local filesystem is the fallback
+// for zero-account local dev. Toggled on B2_KEY_ID's presence alone - if
+// that's set, the other three B2_* vars are required and its absence is
+// treated as local dev, never as "storage half-configured, fall through
+// silently."
 function buildStorageDriver(): StorageDriver {
-  const accountId = process.env.R2_ACCOUNT_ID;
-  if (!accountId) {
+  const keyId = process.env.B2_KEY_ID;
+  if (!keyId) {
     return new LocalStorageDriver(process.env.LOCAL_STORAGE_DIR ?? "./storage");
   }
 
-  const bucket = process.env.R2_BUCKET_NAME;
-  const accessKeyId = process.env.R2_ACCESS_KEY_ID;
-  const secretAccessKey = process.env.R2_SECRET_ACCESS_KEY;
-  if (!bucket || !accessKeyId || !secretAccessKey) {
+  const bucket = process.env.B2_BUCKET_NAME;
+  const region = process.env.B2_REGION;
+  const applicationKey = process.env.B2_APPLICATION_KEY;
+  if (!bucket || !region || !applicationKey) {
     throw new Error(
-      "R2_ACCOUNT_ID is set but R2_BUCKET_NAME/R2_ACCESS_KEY_ID/R2_SECRET_ACCESS_KEY are not - refusing to silently fall back to local disk storage in what looks like a production environment."
+      "B2_KEY_ID is set but B2_BUCKET_NAME/B2_REGION/B2_APPLICATION_KEY are not - refusing to silently fall back to local disk storage in what looks like a production environment."
     );
   }
 
-  return new R2StorageDriver(accountId, bucket, accessKeyId, secretAccessKey);
+  return new B2StorageDriver(bucket, region, keyId, applicationKey);
 }
 
 export const storage: StorageDriver = buildStorageDriver();

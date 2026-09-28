@@ -63,8 +63,8 @@ generalizes that idea into a real submission pipeline that anyone can use.
 | AR viewer | MindAR.js + A-Frame | Free/open image tracking, carried over from the predecessor project - [ADR 0008](docs/adr/0008-ar-viewer-reuse.md) |
 | Print generation | `sharp` + SVG rasterization | Fast, print-quality text layout - [ADR 0005](docs/adr/0005-print-file-generation.md) |
 | QR codes | `qrcode` (error correction `H`, 4-module quiet zone) | Print/scan reliability - [ADR 0004](docs/adr/0004-qr-generation.md) |
-| File storage | Local disk (dev), Cloudflare R2 (prod) | Provider-agnostic `StorageDriver` interface - [ADR 0006](docs/adr/0006-file-storage.md) |
-| Hosting | Vercel + Neon + Cloudflare R2 | $0/month, conventional Next.js stack - [ADR 0010](docs/adr/0010-hosting-vercel-neon-r2.md) |
+| File storage | Local disk (dev), Backblaze B2 (prod) | Provider-agnostic `StorageDriver` interface - [ADR 0006](docs/adr/0006-file-storage.md) |
+| Hosting | Vercel + Neon + Backblaze B2 | $0/month, no payment method required, conventional Next.js stack - [ADR 0010](docs/adr/0010-hosting-vercel-neon-b2.md) |
 
 ## Getting started
 
@@ -93,8 +93,8 @@ only).
 | `DIRECT_URL` | Prisma Migrate's connection string, unpooled | a Neon dev branch |
 | `ADMIN_SECRET` | Shared secret for the admin asset-upload endpoint - see [ADR 0007](docs/adr/0007-admin-auth.md) | generate your own |
 | `PUBLIC_BASE_URL` | Base URL baked into each postcard's QR code | `http://localhost:3000` |
-| `LOCAL_STORAGE_DIR` | Where the local storage driver writes files (used only when `R2_ACCOUNT_ID` is unset) | `./storage` |
-| `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET_NAME` | Cloudflare R2 credentials - storage switches to R2 the moment `R2_ACCOUNT_ID` is set | unset locally |
+| `LOCAL_STORAGE_DIR` | Where the local storage driver writes files (used only when `B2_KEY_ID` is unset) | `./storage` |
+| `B2_KEY_ID`, `B2_APPLICATION_KEY`, `B2_BUCKET_NAME`, `B2_REGION` | Backblaze B2 credentials - storage switches to B2 the moment `B2_KEY_ID` is set | unset locally |
 
 Full reference with comments: [`.env.example`](.env.example).
 
@@ -108,17 +108,18 @@ this build demonstrates are tracked in
 
 ## Deployment
 
-Stack: **Vercel** (app) + **Neon** (Postgres) + **Cloudflare R2** (object
-storage) - all free-tier, $0/month at this project's scale. Rationale and
-alternatives considered: [ADR 0010](docs/adr/0010-hosting-vercel-neon-r2.md).
+Stack: **Vercel** (app) + **Neon** (Postgres) + **Backblaze B2** (object
+storage) - all free-tier, $0/month at this project's scale, no payment
+method required anywhere in the stack. Rationale and alternatives
+considered: [ADR 0010](docs/adr/0010-hosting-vercel-neon-b2.md).
 
 1. **Neon** - create a project at [neon.tech](https://neon.tech), grab the
    pooled and direct connection strings for `DATABASE_URL`/`DIRECT_URL`.
    Create a second branch for local dev so prod stays untouched by local
    testing.
-2. **Cloudflare R2** - create a bucket, then an R2 API token scoped to it,
-   for `R2_ACCOUNT_ID`/`R2_ACCESS_KEY_ID`/`R2_SECRET_ACCESS_KEY`/
-   `R2_BUCKET_NAME`.
+2. **Backblaze B2** - create a bucket, then a non-master application key
+   scoped to it, for `B2_KEY_ID`/`B2_APPLICATION_KEY`/`B2_BUCKET_NAME`.
+   Note the bucket's region (e.g. `us-west-004`) for `B2_REGION`.
 3. **Vercel** - import this repo, set all of the above plus a real
    `ADMIN_SECRET` and `PUBLIC_BASE_URL` (the production domain Vercel
    assigns) as environment variables, then deploy. `vercel-build` (see
@@ -134,16 +135,16 @@ function (not Edge) runtime, which is Vercel's default for route handlers.
 - [ ] Auto-generate the `.mind` target and animation from the uploaded
       photo instead of the manual admin step.
 - [ ] Real session/OAuth-based admin auth ([ADR 0007](docs/adr/0007-admin-auth.md)).
-- [ ] First live production deploy (Neon/R2/Vercel accounts provisioned,
+- [ ] First live production deploy (Neon/B2/Vercel accounts provisioned,
       env vars set - the app itself is deploy-ready as of
-      [ADR 0010](docs/adr/0010-hosting-vercel-neon-r2.md)).
+      [ADR 0010](docs/adr/0010-hosting-vercel-neon-b2.md)).
 
 ## Related project
 
-ar-birthday-postcard - the original single-use WebAR birthday card this
-project generalizes. That repo is a printed, already-delivered personal
-gift, kept private rather than public, and intentionally left untouched -
-see [ADR 0001](docs/adr/0001-new-repo-not-rename.md).
+[ar-birthday-postcard](https://github.com/kevin-ayalaaragon/ar-birthday-postcard) -
+the original single-use WebAR birthday card this project generalizes.
+That repo is a printed, already-delivered personal gift and is
+intentionally left untouched - see [ADR 0001](docs/adr/0001-new-repo-not-rename.md).
 
 ## License
 

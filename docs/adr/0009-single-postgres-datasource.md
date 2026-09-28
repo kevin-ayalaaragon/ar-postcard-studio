@@ -33,7 +33,7 @@ review.
 ## Decision Outcome
 Option 2. `prisma/schema.prisma`'s datasource is now `postgresql` only.
 Local dev points `DATABASE_URL` at a free Neon branch (see
-[0010](0010-hosting-vercel-neon-r2.md)) instead of a local file - this
+[0010](0010-hosting-vercel-neon-b2.md)) instead of a local file - this
 keeps 0003's "no Docker/Postgres server to install" goal intact, gets
 exact dev/prod schema and migration parity (the actual Twelve-Factor
 "dev/prod parity" principle already cited in 0006, not just an aspiration

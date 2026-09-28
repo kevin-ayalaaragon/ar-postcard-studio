@@ -16,7 +16,7 @@ A single `StorageDriver` interface (`putFile`/`getFile`) in
 driver rooted at `LOCAL_STORAGE_DIR`. All routes go through this
 interface and a `/api/files/[...key]` route, rather than a static
 `/public` mount - so a production driver backed by an S3-compatible
-bucket (e.g. Cloudflare R2) can be dropped in behind the same interface
+bucket (e.g. Backblaze B2) can be dropped in behind the same interface
 without changing any caller or public URL shape.
 
 ## Sources
@@ -24,6 +24,7 @@ without changing any caller or public URL shape.
   resource, swappable without code changes, with dev/prod parity as a
   goal - the architectural justification for this abstraction:
   https://12factor.net/backing-services
-- Cloudflare's official docs on R2 as S3-API-compatible object storage,
-  supporting the specific "swap to S3-compatible storage" production
-  path named above: https://www.cloudflare.com/developer-platform/use-cases/s3-compatible-object-storage/
+- Backblaze's official docs on B2's S3-compatible API, supporting the
+  specific "swap to S3-compatible storage" production path named above
+  (see [0010](0010-hosting-vercel-neon-b2.md) for the vendor choice):
+  https://www.backblaze.com/docs/cloud-storage-s3-compatible-api

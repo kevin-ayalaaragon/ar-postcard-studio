@@ -27,9 +27,9 @@ differentiators:
       - prisma/schema.prisma
       - src/lib/db.ts
     resume_bullet: >-
-      Modeled and migrated a relational schema (SQLite dev / Postgres-ready
-      prod) with Prisma, including a deliberate version pin to avoid an
-      unreleased major with a breaking config format.
+      Modeled and migrated a relational schema (Postgres via Neon, same
+      provider dev and prod) with Prisma, including a deliberate version
+      pin to avoid an unreleased major with a breaking config format.
 
   - skill: WebAR integration generalized to a multi-tenant data model
     evidence:
@@ -91,13 +91,16 @@ differentiators:
 
   - skill: Cloud deployment architecture (Vercel + managed Postgres + S3-compatible storage)
     evidence:
-      - docs/adr/0010-hosting-vercel-neon-r2.md
+      - docs/adr/0010-hosting-vercel-neon-b2.md
       - src/lib/storage.ts
     resume_bullet: >-
       Selected and implemented a $0/month production hosting stack
-      (Vercel, Neon Postgres, Cloudflare R2) evaluated against three
-      alternatives on cost, job-market legibility, and this app's actual
-      runtime constraints (a native-binary image-processing dependency
-      needing a Node.js, not Edge, function runtime), then implemented the
+      (Vercel, Neon Postgres, Backblaze B2) evaluated against four
+      alternatives on cost, payment-method exposure, job-market
+      legibility, and this app's actual runtime constraints (a
+      native-binary image-processing dependency needing a Node.js, not
+      Edge, function runtime) - including reversing an initial choice
+      (Cloudflare R2) after finding it required a card on file that a
+      technically-equivalent alternative didn't - then implemented the
       S3-compatible storage driver behind the project's existing
       provider-agnostic storage interface with no caller changes.

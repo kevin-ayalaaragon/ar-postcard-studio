@@ -17,4 +17,4 @@ decision was synthesized/judgment-call rather than sourced.
 | [0007](0007-admin-auth.md) | Shared-secret admin auth (deliberate MVP placeholder) |
 | [0008](0008-ar-viewer-reuse.md) | Keep MindAR.js + A-Frame; mount imperatively, not as React-managed JSX |
 | [0009](0009-single-postgres-datasource.md) | Single Postgres datasource everywhere (drops 0003's SQLite-dev split) |
-| [0010](0010-hosting-vercel-neon-r2.md) | Hosting: Vercel + Neon Postgres + Cloudflare R2 |
+| [0010](0010-hosting-vercel-neon-b2.md) | Hosting: Vercel + Neon Postgres + Backblaze B2 |
