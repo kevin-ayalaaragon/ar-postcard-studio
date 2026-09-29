@@ -46,3 +46,6 @@ next-env.d.ts
 # local dev file storage (uploaded photos / AR assets / generated print files)
 /storage/
 
+
+.vercel
+.env*
