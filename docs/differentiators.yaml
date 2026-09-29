@@ -10,7 +10,7 @@
 # Update this alongside architecture changes, not after the fact from memory.
 
 project: ar-postcard-studio
-last_updated: "2026-09-28"
+last_updated: "2026-09-29"
 
 differentiators:
   - skill: Full-stack TypeScript (Next.js App Router monolith)
@@ -104,3 +104,32 @@ differentiators:
       technically-equivalent alternative didn't - then implemented the
       S3-compatible storage driver behind the project's existing
       provider-agnostic storage interface with no caller changes.
+
+  - skill: Exposed application functionality as an MCP server (agent-callable tools)
+    evidence:
+      - src/app/mcp/route.ts
+      - docs/adr/0011-admin-mcp-server.md
+    resume_bullet: >-
+      Exposed an existing admin workflow as a Model Context Protocol (MCP)
+      server - typed tool schemas (Zod) with structured input/output and
+      read/write annotations - so any MCP-speaking AI client can drive
+      postcard fulfillment, without duplicating the underlying API routes'
+      logic.
+
+  - skill: Found and fixed a broken-access-control vulnerability before first deploy
+    evidence:
+      - docs/adr/0011-admin-mcp-server.md
+      - src/app/mcp/route.ts
+      - src/lib/admin-auth.ts
+    resume_bullet: >-
+      Identified that a newly added MCP endpoint had no authentication of
+      its own callers - it forwarded the server's real admin secret to
+      internal APIs on any caller's behalf, so once that secret was
+      configured in production, an unauthenticated request to a public URL
+      would gain both PII read access and write access to mutate customer
+      data (a confused-deputy / broken-access-control pattern, OWASP API
+      Security Top 10 category). Caught by reviewing the route rather than
+      trusting its own architecture decision record's auth claim, fixed by
+      gating the handler with the app's existing auth check, and corrected
+      the ADR's inaccurate claim in place rather than leaving it misleading
+      for the next reader.

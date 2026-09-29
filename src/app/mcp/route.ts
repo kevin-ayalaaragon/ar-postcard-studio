@@ -1,11 +1,21 @@
 import { createMcpHandler } from "mcp-handler";
 import { z } from "zod";
+import { isAuthorizedAdmin } from "@/lib/admin-auth";
 
 // MCP server exposing this app's own admin operations as tools - see
 // docs/adr/0011-admin-mcp-server.md for why this lives here instead of a
 // separate repo or package. Tools call the existing admin/public API routes
 // over HTTP rather than duplicating their Prisma/storage logic, so this file
 // stays a thin wrapper and the routes remain the single source of truth.
+//
+// isAuthorizedAdmin() below gates every request to this route itself, not
+// just the internal calls to admin/postcards endpoints it makes on a
+// caller's behalf. Without that gate, this handler always presents the
+// server's own real ADMIN_SECRET to those internal routes regardless of who
+// called /mcp - meaning anyone who found this URL would get unauthenticated
+// admin access (including attach_ar_assets, a write) and postcard PII
+// (names/messages/photo URLs) through list_pending_postcards/get_postcard.
+// A caller must send the same x-admin-secret header the human admin UI does.
 
 function baseUrl(): string {
   return process.env.PUBLIC_BASE_URL ?? "http://localhost:3000";
@@ -193,4 +203,11 @@ const handler = createMcpHandler((server) => {
   );
 });
 
-export { handler as GET, handler as POST };
+async function authorizedHandler(request: Request): Promise<Response> {
+  if (!isAuthorizedAdmin(request)) {
+    return new Response("Unauthorized", { status: 401 });
+  }
+  return handler(request);
+}
+
+export { authorizedHandler as GET, authorizedHandler as POST };

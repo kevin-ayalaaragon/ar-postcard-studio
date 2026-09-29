@@ -1,7 +1,9 @@
 # 0011 - Expose admin operations as an MCP server, embedded in the Next.js app
 
 ## Status
-Accepted
+Accepted. The auth claim in the original Consequences section below was
+found to be inaccurate and fixed - see the note at the end of that
+section.
 
 ## Context and Problem Statement
 The admin workflow (list submissions waiting on AR assets, attach a compiled
@@ -45,6 +47,20 @@ those routes stay the single source of truth and the MCP layer stays thin.
   [ADR-0007](0007-admin-auth.md)'s shared-secret placeholder auth rather than
   something MCP-specific - accepted as the same already-documented debt, not
   new debt introduced here.
+
+**Correction**: the claim above was wrong as originally implemented. The
+route handler called the internal admin API routes using the server's own
+`ADMIN_SECRET` regardless of who called `/mcp` - it never required the MCP
+caller to present that secret. That's not "inheriting" ADR-0007's auth,
+it's bypassing it: `/mcp` was reachable by anyone, and every tool
+(including `attach_ar_assets`, a write, and the read tools returning
+sender/recipient names, messages, and photo URLs) would succeed for an
+unauthenticated caller the moment `ADMIN_SECRET` was configured in
+production. Fixed by gating the exported `GET`/`POST` handlers with
+`isAuthorizedAdmin()` (the same check `/api/admin/*` already uses) before
+any tool runs, so an MCP client must present `x-admin-secret` itself, same
+as the human admin UI. Found before first deploy, not after - see
+`src/app/mcp/route.ts`.
 
 ## Sources
 - Next.js MCP guide (confirms Next.js's own MCP feature, `next-devtools-mcp`,
