@@ -10,7 +10,7 @@
 # Update this alongside architecture changes, not after the fact from memory.
 
 project: ar-postcard-studio
-last_updated: "2026-09-29"
+last_updated: "2026-09-30"
 
 differentiators:
   - skill: Full-stack TypeScript (Next.js App Router monolith)
@@ -133,3 +133,16 @@ differentiators:
       gating the handler with the app's existing auth check, and corrected
       the ADR's inaccurate claim in place rather than leaving it misleading
       for the next reader.
+
+  - skill: Debugged a silent production failure from a falsy-value edge case
+    evidence:
+      - src/app/mcp/route.ts
+    resume_bullet: >-
+      Root-caused every MCP tool call failing in production to a
+      nullish-coalescing operator (??) treating a configured-but-empty
+      environment variable as present, when the code's intent required
+      treating any falsy value as absent; fixed with the correct operator
+      and replaced the remaining static per-environment URL with the
+      platform's own auto-injected per-deployment value, removing a class
+      of misconfiguration entirely rather than just correcting one instance
+      of it.
