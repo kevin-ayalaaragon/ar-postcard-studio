@@ -136,7 +136,8 @@ differentiators:
 
   - skill: Debugged a silent production failure from a falsy-value edge case
     evidence:
-      - src/app/mcp/route.ts
+      - src/lib/base-url.ts
+      - tests/base-url.test.ts
     resume_bullet: >-
       Root-caused every MCP tool call failing in production to a
       nullish-coalescing operator (??) treating a configured-but-empty
@@ -146,3 +147,24 @@ differentiators:
       platform's own auto-injected per-deployment value, removing a class
       of misconfiguration entirely rather than just correcting one instance
       of it.
+
+  - skill: Automated regression tests for security and configuration bugs (Vitest)
+    evidence:
+      - docs/adr/0012-vitest-testing.md
+      - tests/mcp-route.test.ts
+      - tests/api-routes.test.ts
+      - tests/admin-auth.test.ts
+      - tests/base-url.test.ts
+      - .github/workflows/ci.yml
+    resume_bullet: >-
+      Added a 71-test Vitest suite (7 files, about 2 seconds) that runs in
+      CI after lint and build, including regression tests for the two
+      production bugs already fixed by hand: the unauthenticated /mcp route
+      (401 without a secret, 401 with a wrong one, 200 with the correct one,
+      repeated across the admin routes) and the empty-string
+      PUBLIC_BASE_URL fallback. Each regression test was confirmed to fail
+      when its original bug was deliberately reintroduced. Also covers the
+      public submission pipeline, the storage driver's path-traversal guard
+      and fail-closed B2 configuration, and QR and print-back generation
+      decoded back to the exact URL. Prisma is mocked and the AR viewer is
+      not covered; both limits are recorded in the ADR.
