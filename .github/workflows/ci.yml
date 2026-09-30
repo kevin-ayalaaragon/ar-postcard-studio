@@ -42,3 +42,7 @@ jobs:
       - run: npx prisma migrate deploy
       - run: npm run lint
       - run: npm run build
+      # Unit + route-handler tests (docs/adr/0012-vitest-testing.md). They
+      # set their own env in tests/setup.ts, so they do not depend on the
+      # job-level values above and need no database.
+      - run: npm test

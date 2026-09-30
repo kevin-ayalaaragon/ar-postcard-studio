@@ -65,10 +65,12 @@ generalizes that idea into a real submission pipeline that anyone can use.
 | QR codes | `qrcode` (error correction `H`, 4-module quiet zone) | Print/scan reliability - [ADR 0004](docs/adr/0004-qr-generation.md) |
 | File storage | Local disk (dev), Backblaze B2 (prod) | Provider-agnostic `StorageDriver` interface - [ADR 0006](docs/adr/0006-file-storage.md) |
 | Hosting | Vercel + Neon + Backblaze B2 | $0/month, no payment method required, conventional Next.js stack - [ADR 0010](docs/adr/0010-hosting-vercel-neon-b2.md) |
+| Testing | Vitest (node environment) | Unit and route-handler tests, run in CI - [ADR 0012](docs/adr/0012-vitest-testing.md) |
 
 ## Getting started
 
-**Prerequisites:** Node.js 20.9+ (developed against 24), npm, and a free
+**Prerequisites:** Node.js 20.9+ to run the app (22.12+ to run the tests,
+per Vitest's requirement; developed against 24), npm, and a free
 [Neon](https://neon.tech) Postgres branch for local dev (no local Postgres
 server or Docker needed - see [ADR 0009](docs/adr/0009-single-postgres-datasource.md)).
 
@@ -84,6 +86,25 @@ npm run dev
 
 Uploaded/generated files land under `./storage/` (gitignored, local dev
 only).
+
+## Testing
+
+```bash
+npm test   # vitest run: no database, secrets or network needed
+```
+
+The suite calls route handlers directly and covers: the admin shared-secret
+check and the 401/401/200 gate on `/mcp` and the admin routes, the MCP tool
+surface and annotations, the public submission pipeline (MIME allow-list,
+15 MB cap, undecodable-image rejection, dimension extraction), the storage
+driver (round trip, path-traversal guard, fail-closed B2 configuration),
+QR and print-back generation (decoded back to the exact URL, 1800x1200 at
+300 DPI), and the `baseUrl()` fallback order. Prisma is mocked and the AR
+viewer is not covered; see [ADR 0012](docs/adr/0012-vitest-testing.md).
+
+CI (`.github/workflows/ci.yml`) runs `prisma migrate deploy` against a
+Postgres 16 service, then lint, build and `npm test` on every push and
+pull request to `main`.
 
 ## Environment variables
 
