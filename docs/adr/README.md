@@ -10,7 +10,7 @@ decision was synthesized/judgment-call rather than sourced.
 | [0000](0000-record-architecture-decisions.md) | Record architecture decisions with MADR |
 | [0001](0001-new-repo-not-rename.md) | New repository instead of renaming ar-birthday-postcard |
 | [0002](0002-nextjs-monolith.md) | Next.js App Router monolith (frontend + API in one deployable) |
-| [0003](0003-database-orm.md) | Prisma ORM, SQLite dev / Postgres prod, pinned to the 6.x line |
+| [0003](0003-database-orm.md) | Prisma ORM, pinned to the 6.x line (SQLite-dev split superseded by 0009) |
 | [0004](0004-qr-generation.md) | QR settings: error correction 'H', 4-module quiet zone, black-on-white |
 | [0005](0005-print-file-generation.md) | sharp + SVG overlay for print-ready postcard files |
 | [0006](0006-file-storage.md) | Storage abstraction: local dev, swappable to S3-compatible prod |

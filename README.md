@@ -156,9 +156,8 @@ function (not Edge) runtime, which is Vercel's default for route handlers.
 - [ ] Auto-generate the `.mind` target and animation from the uploaded
       photo instead of the manual admin step.
 - [ ] Real session/OAuth-based admin auth ([ADR 0007](docs/adr/0007-admin-auth.md)).
-- [ ] First live production deploy (Neon/B2/Vercel accounts provisioned,
-      env vars set - the app itself is deploy-ready as of
-      [ADR 0010](docs/adr/0010-hosting-vercel-neon-b2.md)).
+- [x] First live production deploy on Vercel + Neon + Backblaze B2
+      ([ADR 0010](docs/adr/0010-hosting-vercel-neon-b2.md)).
 
 ## Related project
 

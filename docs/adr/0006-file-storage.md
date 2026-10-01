@@ -12,11 +12,12 @@ storage just to run locally.
 
 ## Decision Outcome
 A single `StorageDriver` interface (`putFile`/`getFile`) in
-`src/lib/storage.ts`, with one implementation today: a local-filesystem
-driver rooted at `LOCAL_STORAGE_DIR`. All routes go through this
+`src/lib/storage.ts`, with two implementations: a local-filesystem driver
+rooted at `LOCAL_STORAGE_DIR` for development, and a Backblaze B2 driver
+over the S3 API for production (selected when `B2_KEY_ID` is set; see
+[ADR 0010](0010-hosting-vercel-neon-b2.md)). All routes go through this
 interface and a `/api/files/[...key]` route, rather than a static
-`/public` mount - so a production driver backed by an S3-compatible
-bucket (e.g. Backblaze B2) can be dropped in behind the same interface
+`/public` mount - so the production driver sits behind the same interface
 without changing any caller or public URL shape.
 
 ## Sources

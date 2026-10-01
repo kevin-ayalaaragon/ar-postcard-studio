@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { adminRequest, makePng } from "./helpers";
+import { adminRequest, decodeQr, makePng } from "./helpers";
 
 // Prisma is mocked (see docs/adr/0012-vitest-testing.md): these tests cover
 // route logic, not the database. Storage is the real local driver writing
@@ -18,6 +18,7 @@ import { GET as listAdmin } from "@/app/api/admin/postcards/route";
 import { POST as attachAssets } from "@/app/api/admin/postcards/[slug]/assets/route";
 import { POST as submit } from "@/app/api/postcards/route";
 import { GET as getPostcard } from "@/app/api/postcards/[slug]/route";
+import { GET as printBack } from "@/app/api/postcards/[slug]/print/back/route";
 import { GET as getFile } from "@/app/api/files/[...key]/route";
 import { storage } from "@/lib/storage";
 
@@ -237,6 +238,33 @@ describe("GET /api/postcards/[slug] (public lookup)", () => {
     expect(body).toMatchObject({ slug: "abc", targetMindUrl: null, videoUrl: null, photoWidthPx: 100 });
     expect(body).not.toHaveProperty("senderName");
     expect(body).not.toHaveProperty("message");
+  });
+});
+
+describe("GET /api/postcards/[slug]/print/back", () => {
+  const row = { slug: "abc", message: "hi", senderName: "Kevin", recipientName: "Ana" };
+
+  it("404 for an unknown slug", async () => {
+    db.postcard.findUnique.mockResolvedValue(null);
+    const res = await printBack(new Request("http://localhost/x"), params({ slug: "nope" }));
+    expect(res.status).toBe(404);
+  });
+
+  // Same ?? vs || regression as tests/base-url.test.ts (commit 7e2d0aa), on the
+  // print route: an empty-string PUBLIC_BASE_URL must fall through, not encode
+  // a relative "/postcard/<slug>" in the QR.
+  it("encodes an absolute viewer URL in the QR when PUBLIC_BASE_URL is set but empty", async () => {
+    const saved = process.env.PUBLIC_BASE_URL;
+    process.env.PUBLIC_BASE_URL = "";
+    try {
+      db.postcard.findUnique.mockResolvedValue(row);
+      const res = await printBack(new Request("http://localhost/x"), params({ slug: "abc" }));
+      expect(res.status).toBe(200);
+      expect(await decodeQr(Buffer.from(await res.arrayBuffer()))).toBe("http://localhost:3000/postcard/abc");
+    } finally {
+      if (saved === undefined) delete process.env.PUBLIC_BASE_URL;
+      else process.env.PUBLIC_BASE_URL = saved;
+    }
   });
 });
 

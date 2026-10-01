@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { baseUrl } from "@/lib/base-url";
 import { prisma } from "@/lib/db";
 import { renderPostcardBack } from "@/lib/postcard-print";
 
@@ -15,8 +16,7 @@ export async function GET(
     return NextResponse.json({ error: "Postcard not found" }, { status: 404 });
   }
 
-  const baseUrl = process.env.PUBLIC_BASE_URL ?? "http://localhost:3000";
-  const viewerUrl = `${baseUrl}/postcard/${slug}`;
+  const viewerUrl = `${baseUrl()}/postcard/${slug}`;
 
   const png = await renderPostcardBack({
     message: postcard.message,

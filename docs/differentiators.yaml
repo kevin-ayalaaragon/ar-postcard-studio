@@ -157,7 +157,7 @@ differentiators:
       - tests/base-url.test.ts
       - .github/workflows/ci.yml
     resume_bullet: >-
-      Added a 71-test Vitest suite (7 files, about 2 seconds) that runs in
+      Added a 73-test Vitest suite (7 files, about 2 seconds) that runs in
       CI after lint and build, including regression tests for the two
       production bugs already fixed by hand: the unauthenticated /mcp route
       (401 without a secret, 401 with a wrong one, 200 with the correct one,

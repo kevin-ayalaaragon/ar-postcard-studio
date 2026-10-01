@@ -13,7 +13,7 @@ datasource db {
   // connection limit. directUrl is the unpooled connection Prisma Migrate
   // needs (pooled/transaction-mode connections don't support the
   // prepared statements migrations rely on). Neon provides both for the
-  // same database. See docs/adr/0010-hosting-vercel-neon-r2.md.
+  // same database. See docs/adr/0010-hosting-vercel-neon-b2.md.
   url       = env("DATABASE_URL")
   directUrl = env("DIRECT_URL")
 }
