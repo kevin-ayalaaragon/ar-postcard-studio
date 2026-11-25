@@ -36,7 +36,11 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 22
+          # Matches package.json "engines": graphql-yoga 6 needs >= 22.15
+          # (docs/adr/0013-graphql-admin-api.md). A bare "22" floats; this
+          # states the floor and still takes the latest 22.x patch.
+          node-version: "22.x"
+          check-latest: true
           cache: npm
       - run: npm ci
       - run: npx prisma migrate deploy

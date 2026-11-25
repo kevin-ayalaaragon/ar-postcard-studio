@@ -12,22 +12,85 @@ interface AdminPostcard {
   createdAt: string;
 }
 
+// One fixed, typed query against /api/graphql (docs/adr/0013-graphql-admin-api.md).
+// Uploads stay on the REST route below; only the list read moved.
+const POSTCARDS_QUERY = /* GraphQL */ `
+  query AdminPostcards($first: Int!, $after: String) {
+    postcards(first: $first, after: $after) {
+      edges {
+        node {
+          slug
+          status
+          senderName
+          recipientName
+          message
+          photoUrl
+          createdAt
+        }
+      }
+      pageInfo {
+        hasNextPage
+        endCursor
+      }
+    }
+  }
+`;
+
+const PAGE_SIZE = 20;
+
+interface PostcardsQueryResult {
+  data?: {
+    postcards: {
+      edges: Array<{ node: AdminPostcard }>;
+      pageInfo: { hasNextPage: boolean; endCursor: string | null };
+    };
+  } | null;
+  errors?: Array<{ message: string }>;
+}
+
 export default function AdminDashboard() {
   const [secret, setSecret] = useState("");
   const [postcards, setPostcards] = useState<AdminPostcard[] | null>(null);
+  const [endCursor, setEndCursor] = useState<string | null>(null);
+  const [hasNextPage, setHasNextPage] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  async function loadPostcards(secretToUse: string) {
+  // after === undefined loads the first page and replaces the list (unlock,
+  // and the refresh after an upload); a cursor appends the next page.
+  async function loadPostcards(secretToUse: string, after?: string) {
     setError(null);
-    const res = await fetch("/api/admin/postcards", {
-      headers: { "x-admin-secret": secretToUse },
+    const res = await fetch("/api/graphql", {
+      method: "POST",
+      headers: { "content-type": "application/json", "x-admin-secret": secretToUse },
+      body: JSON.stringify({ query: POSTCARDS_QUERY, variables: { first: PAGE_SIZE, after: after ?? null } }),
     });
-    if (!res.ok) {
-      setError(res.status === 401 ? "Wrong admin secret" : "Failed to load postcards");
+    if (res.status === 401) {
+      setError("Wrong admin secret");
       setPostcards(null);
       return;
     }
-    setPostcards(await res.json());
+    const body: PostcardsQueryResult | null = res.ok ? await res.json() : null;
+    const page = body?.data?.postcards;
+    if (!page || body?.errors?.length) {
+      setError("Failed to load postcards");
+      if (!after) setPostcards(null);
+      return;
+    }
+    const nodes = page.edges.map((e) => e.node);
+    setPostcards((prev) => (after && prev ? [...prev, ...nodes] : nodes));
+    setEndCursor(page.pageInfo.endCursor);
+    setHasNextPage(page.pageInfo.hasNextPage);
+  }
+
+  async function handleLoadMore() {
+    if (!endCursor) return;
+    setLoadingMore(true);
+    try {
+      await loadPostcards(secret, endCursor);
+    } finally {
+      setLoadingMore(false);
+    }
   }
 
   function handleUnlock(event: FormEvent<HTMLFormElement>) {
@@ -61,6 +124,16 @@ export default function AdminDashboard() {
       {postcards.map((p) => (
         <PostcardRow key={p.slug} postcard={p} secret={secret} onChanged={() => loadPostcards(secret)} />
       ))}
+      {hasNextPage && (
+        <button
+          onClick={handleLoadMore}
+          disabled={loadingMore}
+          className="self-start rounded border border-zinc-700 px-4 py-2 text-sm disabled:opacity-50"
+        >
+          {loadingMore ? "Loading..." : "Load more"}
+        </button>
+      )}
+      {error && <p className="text-sm text-red-400">{error}</p>}
     </div>
   );
 }
