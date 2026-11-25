@@ -65,6 +65,39 @@ describe("GET /api/admin/postcards auth gate", () => {
     expect(body).toHaveLength(1);
     expect(body[0]).toMatchObject({ slug: "abc", photoUrl: "/api/files/postcards/abc/photo.png" });
   });
+
+  // The MCP tool list_pending_postcards fetches this route and filters the
+  // whole array for SUBMITTED in memory (src/app/mcp/route.ts). If this route
+  // ever paginates or changes shape, that tool silently loses rows or fields.
+  it("stays unpaginated with the exact field set the MCP tool depends on", async () => {
+    const rows = Array.from({ length: 60 }, (_, i) => ({
+      id: `id${i}`,
+      slug: `s${i}`,
+      status: i % 2 ? "READY" : "SUBMITTED",
+      senderName: "Kevin",
+      recipientName: "Ana",
+      message: "hi",
+      photoPath: `postcards/s${i}/photo.png`,
+      photoWidthPx: 100,
+      photoHeightPx: 150,
+      targetMindPath: null,
+      videoPath: null,
+      createdAt: new Date("2026-09-30T00:00:00Z"),
+      updatedAt: new Date("2026-09-30T00:00:00Z"),
+    }));
+    db.postcard.findMany.mockResolvedValue(rows);
+    const res = await listAdmin(adminRequest(url, SECRET));
+    const body = await res.json();
+
+    const args = db.postcard.findMany.mock.calls[0][0];
+    expect(args).not.toHaveProperty("take");
+    expect(args).not.toHaveProperty("where");
+    expect(body).toHaveLength(60);
+    expect(Object.keys(body[0]).sort()).toEqual(
+      ["createdAt", "message", "photoUrl", "recipientName", "senderName", "slug", "status"]
+    );
+    expect(body[0]).not.toHaveProperty("photoPath");
+  });
 });
 
 describe("POST /api/admin/postcards/[slug]/assets", () => {

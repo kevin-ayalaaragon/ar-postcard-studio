@@ -10,7 +10,7 @@
 # Update this alongside architecture changes, not after the fact from memory.
 
 project: ar-postcard-studio
-last_updated: "2026-09-30"
+last_updated: "2026-11-24"
 
 differentiators:
   - skill: Full-stack TypeScript (Next.js App Router monolith)
@@ -155,10 +155,11 @@ differentiators:
       - tests/api-routes.test.ts
       - tests/admin-auth.test.ts
       - tests/base-url.test.ts
+      - tests/graphql-route.test.ts
       - .github/workflows/ci.yml
     resume_bullet: >-
-      Added a 73-test Vitest suite (7 files, about 2 seconds) that runs in
-      CI after lint and build, including regression tests for the two
+      Added a 98-test Vitest suite (9 files) that runs in CI after lint
+      and build, including regression tests for the two
       production bugs already fixed by hand: the unauthenticated /mcp route
       (401 without a secret, 401 with a wrong one, 200 with the correct one,
       repeated across the admin routes) and the empty-string
@@ -166,5 +167,28 @@ differentiators:
       when its original bug was deliberately reintroduced. Also covers the
       public submission pipeline, the storage driver's path-traversal guard
       and fail-closed B2 configuration, and QR and print-back generation
-      decoded back to the exact URL. Prisma is mocked and the AR viewer is
-      not covered; both limits are recorded in the ADR.
+      decoded back to the exact URL, plus the GraphQL API's auth gate,
+      cursor pagination, query cost limits, error masking and checked-in
+      schema contract. Prisma is mocked and the AR viewer is not covered;
+      both limits are recorded in the ADR.
+
+  - skill: GraphQL API design (code-first schema, keyset pagination, query cost limits)
+    evidence:
+      - docs/adr/0013-graphql-admin-api.md
+      - src/lib/graphql/schema.ts
+      - src/app/api/graphql/route.ts
+      - src/lib/postcards.ts
+      - schema.graphql
+      - tests/graphql-route.test.ts
+    resume_bullet: >-
+      Added a read-only, admin-only GraphQL API (GraphQL Yoga + Pothos,
+      code-first) beside the existing REST routes as a bounded, typed query
+      surface for the admin dashboard and agent callers: Relay-style keyset
+      pagination over (createdAt, id) that fetches one extra row for
+      hasNextPage, depth/breadth/complexity limits enforced at validation so
+      an over-limit query never reaches the database, auth checked before
+      any GraphQL parsing, masked errors, and a checked-in SDL contract that
+      a test keeps in sync. Kept the REST list's unpaginated response shape
+      intact because an MCP tool depends on it, pinned that with a test, and
+      recorded in the ADR that REST or tRPC would also have worked for one
+      table and one client.

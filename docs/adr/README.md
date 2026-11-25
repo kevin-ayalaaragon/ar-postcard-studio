@@ -20,3 +20,4 @@ decision was synthesized/judgment-call rather than sourced.
 | [0010](0010-hosting-vercel-neon-b2.md) | Hosting: Vercel + Neon Postgres + Backblaze B2 |
 | [0011](0011-admin-mcp-server.md) | Expose admin operations as an MCP server, embedded in the Next.js app |
 | [0012](0012-vitest-testing.md) | Vitest (node environment) for unit and route-handler tests |
+| [0013](0013-graphql-admin-api.md) | Read-only, admin-only GraphQL API (Yoga + Pothos) beside the REST routes |

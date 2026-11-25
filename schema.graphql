@@ -1,0 +1,66 @@
+"""ISO-8601 timestamp (UTC)."""
+scalar DateTime
+
+type PageInfo {
+  endCursor: String
+  hasNextPage: Boolean!
+  hasPreviousPage: Boolean!
+  startCursor: String
+}
+
+"""
+A submitted postcard, admin view. Includes sender PII (senderName, message), unlike the public GET /api/postcards/{slug}. Files are exposed as same-origin /api/files URLs, not internal filesystem paths; the URL contains the storage key.
+"""
+type Postcard {
+  createdAt: DateTime!
+  message: String!
+  photoHeightPx: Int!
+  photoUrl: String!
+  photoWidthPx: Int!
+  recipientName: String!
+  senderName: String!
+  slug: String!
+  status: PostcardStatus!
+  targetMindUrl: String
+  videoUrl: String
+}
+
+type PostcardConnection {
+  edges: [PostcardEdge!]!
+  pageInfo: PageInfo!
+}
+
+type PostcardEdge {
+  cursor: String!
+  node: Postcard!
+}
+
+enum PostcardStatus {
+  """Target and video attached; viewer and print files are live."""
+  READY
+
+  """Photo and message received; waiting on AR assets."""
+  SUBMITTED
+}
+
+type Query {
+  """
+  One postcard by slug, or null if none exists. Admin-only, includes sender PII.
+  """
+  postcard(slug: String!): Postcard
+
+  """
+  Postcards, newest first. first defaults to 20, max 50. Forward pagination only: last/before are rejected.
+  """
+  postcards(
+    after: String
+
+    """Not supported: forward pagination only."""
+    before: String
+    first: Int
+
+    """Not supported: forward pagination only."""
+    last: Int
+    status: PostcardStatus
+  ): PostcardConnection!
+}
