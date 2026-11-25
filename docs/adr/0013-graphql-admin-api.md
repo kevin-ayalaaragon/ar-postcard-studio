@@ -52,7 +52,8 @@ Option 1, in `src/app/api/graphql/route.ts` with the schema in
   rejected with a clear error rather than silently clamped. `last`/`before`
   are rejected (forward pagination only). `postcard(slug)` returns one
   postcard or null. `PostcardStatus` is an enum. `Postcard` exposes file
-  **URLs** (built with `fileUrl()`), never storage paths.
+  **URLs** (built with `fileUrl()`), not internal filesystem paths. The
+  URL is `/api/files/<storage key>`, so it does contain the storage key.
 - **Pagination is keyset, not offset.** Order is `createdAt desc, id desc`;
   `id` breaks ties so the order is total. The cursor is an opaque
   base64url of `createdAt|id`, and "after" becomes
@@ -66,8 +67,11 @@ Option 1, in `src/app/api/graphql/route.ts` with the schema in
   validated or resolved.
 - **Cost limits.** `@pothos/plugin-complexity` caps depth (6), breadth
   (40 selections in the whole document) and total complexity (1000). A
-  connection costs `1 + first x` its selection, and `edges` is set not to
-  add the default list multiplier again. One 50-row page selecting every
+  connection costs `1 + first x` its selection, with `first` clamped to
+  1..50 for scoring so a negative `first` cannot cancel out other aliases
+  (the plugin also floors multipliers at 0, but the clamp does not rely on
+  that),
+  and `edges` is set not to add the default list multiplier again. One 50-row page selecting every
   field costs 951 and passes; two in one request do not. Breadth stops
   alias amplification (60 aliased `postcard(slug)` lookups are 120
   selections). Pothos computes this from the document's shape when
@@ -84,9 +88,12 @@ Option 1, in `src/app/api/graphql/route.ts` with the schema in
 - **Errors.** Yoga's `maskedErrors` turns unexpected errors (a database
   failure, say) into `"Unexpected error."`. Only deliberate `GraphQLError`s
   such as "Invalid cursor." keep their message.
-- **No CSRF plugin.** The custom `x-admin-secret` header already forces a
-  CORS preflight, which a cross-site form post or simple request cannot
-  pass. Adding Yoga's CSRF prevention plugin would duplicate that.
+- **No CSRF plugin; CORS off.** The custom `x-admin-secret` header forces
+  a CORS preflight, which a cross-site form post or simple request cannot
+  send. Yoga is configured with `cors: false` (no `Access-Control-*`
+  headers on any response) and the route exports no `OPTIONS` handler, so
+  that preflight is never approved, independent of Yoga's CORS defaults.
+  Adding Yoga's CSRF prevention plugin would duplicate that.
 - **Shared data access.** `src/lib/postcards.ts` holds the reads
   (`listPostcards`, `listAllPostcards`, `getPostcardBySlug`) and the admin
   mapping (`toAdminPostcard`). The REST admin list now calls

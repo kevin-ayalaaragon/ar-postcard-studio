@@ -18,8 +18,10 @@ import { schema } from "@/lib/graphql/schema";
 //   (bad cursor, first out of range) keep their message.
 // - batching off: one operation per request, so the complexity limit in
 //   src/lib/graphql/schema.ts bounds the cost of a request.
-// - No CSRF plugin: the custom x-admin-secret header already forces a CORS
-//   preflight, which a cross-site form or simple request cannot pass.
+// - cors: false, and no OPTIONS export: Yoga adds no Access-Control-* headers,
+//   so a cross-origin browser request carrying x-admin-secret fails its
+//   preflight. That is why there is no CSRF plugin: the custom header
+//   already forces a preflight that is never approved.
 const isDev = process.env.NODE_ENV === "development";
 
 const yoga = createYoga({
@@ -30,6 +32,7 @@ const yoga = createYoga({
   batching: false,
   graphiql: isDev,
   landingPage: false,
+  cors: false,
 });
 
 export async function POST(request: Request): Promise<Response> {

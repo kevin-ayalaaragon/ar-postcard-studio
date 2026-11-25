@@ -76,7 +76,7 @@ const PostcardStatus = builder.enumType("PostcardStatus", {
 
 const Postcard = builder.objectRef<AdminPostcard>("Postcard").implement({
   description:
-    "A submitted postcard, admin view. Includes sender PII (senderName, message), unlike the public GET /api/postcards/{slug}. Files are exposed as URLs only, never storage paths.",
+    "A submitted postcard, admin view. Includes sender PII (senderName, message), unlike the public GET /api/postcards/{slug}. Files are exposed as same-origin /api/files URLs, not internal filesystem paths; the URL contains the storage key.",
   fields: (t) => ({
     slug: t.exposeString("slug"),
     status: t.field({ type: PostcardStatus, resolve: (p) => p.status }),
@@ -101,10 +101,14 @@ builder.queryType({
         args: {
           status: t.arg({ type: PostcardStatus, required: false }),
         },
-        // Cost scales with the page size the caller asks for.
+        // Cost scales with the page size the caller asks for. Clamped to
+        // [1, 50] because the cost is computed before the resolver can reject
+        // first: a negative multiplier would cancel out sibling aliases.
+        // plugin-complexity 4.2.3 also floors multipliers at 0; this clamp
+        // does not depend on that.
         complexity: (args) => ({
           field: 1,
-          multiplier: Math.min(args.first ?? DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE),
+          multiplier: Math.min(Math.max(args.first ?? DEFAULT_PAGE_SIZE, 1), MAX_PAGE_SIZE),
         }),
         resolve: async (_root, args) => {
           if (args.last != null || args.before != null) {

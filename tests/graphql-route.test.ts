@@ -109,6 +109,20 @@ describe("/api/graphql auth gate (before Yoga parses anything)", () => {
 });
 
 describe("/api/graphql transport", () => {
+  it("sends no CORS headers, even to a cross-origin caller with the secret", async () => {
+    db.postcard.findMany.mockResolvedValue([]);
+    const res = await POST(
+      adminRequest(URL, SECRET, {
+        method: "POST",
+        headers: { "content-type": "application/json", origin: "https://evil.example" },
+        body: JSON.stringify({ query: LIST }),
+      })
+    );
+    expect(res.status).toBe(200);
+    expect(res.headers.get("access-control-allow-origin")).toBeNull();
+    expect(res.headers.get("access-control-allow-headers")).toBeNull();
+  });
+
   it("GET never executes an operation (405 outside development)", async () => {
     const res = await GET(adminRequest(`${URL}?query=${encodeURIComponent("{ postcard(slug:\"a\") { slug } }")}`, SECRET));
     expect(res.status).toBe(405);
@@ -239,6 +253,24 @@ describe("query cost limits (checked before any resolver runs)", () => {
   it("rejects several max-size pages in one request as too complex", async () => {
     const pages = Array.from({ length: 4 }, (_, i) => `p${i}: postcards(first: 50) { edges { node { slug message senderName } } }`).join("\n");
     const res = await gql(`{ ${pages} }`);
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.errors?.[0].message).toMatch(/complexity/i);
+    expect(db.postcard.findMany).not.toHaveBeenCalled();
+  });
+
+  // Cost is computed before the resolver can reject first < 1, so a
+  // negative first must not score negative and offset sibling aliases.
+  // @pothos/plugin-complexity 4.2.3 already floors multipliers at 0, and the
+  // schema clamps first to 1..50 for scoring as well; this test guards both
+  // against a plugin upgrade or a refactor that drops the clamp.
+  it("rejects a negative-first alias used to offset max-size pages, with zero Prisma calls", async () => {
+    const full = "slug status senderName recipientName message photoUrl photoWidthPx photoHeightPx targetMindUrl videoUrl createdAt";
+    // Two full pages cost 1302 (over 1000) and 28 selections; the negative alias
+    // adds 4 selections, so breadth (40) stays under its cap and only the
+    // complexity limit can reject this. With no floor at all, neg would score -29999.
+    const pages = Array.from({ length: 2 }, (_, i) => `p${i}: postcards(first: 50) { edges { node { ${full} } } }`).join(" ");
+    const res = await gql(`{ neg: postcards(first: -10000) { edges { node { slug } } } ${pages} }`);
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.errors?.[0].message).toMatch(/complexity/i);

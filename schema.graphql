@@ -9,7 +9,7 @@ type PageInfo {
 }
 
 """
-A submitted postcard, admin view. Includes sender PII (senderName, message), unlike the public GET /api/postcards/{slug}. Files are exposed as URLs only, never storage paths.
+A submitted postcard, admin view. Includes sender PII (senderName, message), unlike the public GET /api/postcards/{slug}. Files are exposed as same-origin /api/files URLs, not internal filesystem paths; the URL contains the storage key.
 """
 type Postcard {
   createdAt: DateTime!

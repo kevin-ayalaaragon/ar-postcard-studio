@@ -4,7 +4,8 @@ import { fileUrl } from "@/lib/storage";
 
 // Read-side data access for postcards, shared by the REST admin list and the
 // GraphQL API (docs/adr/0013-graphql-admin-api.md). Callers get URLs built
-// with fileUrl(), never raw storage paths.
+// with fileUrl() (same-origin /api/files URLs that contain the storage key),
+// never internal filesystem paths.
 
 export type { PostcardStatus };
 
